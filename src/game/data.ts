@@ -189,7 +189,7 @@ export interface StageDef {
 export const STAGES: StageDef[] = [
   {
     id: 1, name: 'Matchwood Thicket', sub: 'The damp creeps between the roots',
-    bg: 'bg-forest.png', music: 'stage1', tint: 'rgba(8,26,14,0.22)', duration: 270,
+    bg: 'bg-forest.png', music: 'stage1', tint: 'rgba(8,26,14,0.16)', duration: 270,
     bossId: 'mossmaw', bossName: 'MOSSMAW', bossTitle: 'Glutton of the Thicket',
     fog: 'rgba(4,14,8,0.42)',
     waves: [

@@ -127,6 +127,7 @@ export class Game {
   gameOverT = -1;
   victoryT = -1;
   freezeT = 0;
+  slowMoT = 0;
   levelupOpen = false;
   rerollsLeft = 0;
   private uidCounter = 1;
@@ -670,6 +671,7 @@ export class Game {
     for (let i = 0; i < 3; i++) this.dropPickup('hp', e.x + this.rng.range(-80, 80), e.y + this.rng.range(-80, 80), 0);
     this.dropPickup('chest', e.x, e.y, 0);
     this.boss = null;
+    this.slowMoT = 0.6;
 
     // kill remaining normal enemies (convert to gems, no extra effects)
     for (const o of this.enemies) {

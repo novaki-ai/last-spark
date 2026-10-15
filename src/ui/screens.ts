@@ -374,13 +374,14 @@ export class UI {
   }
 
   // ---------- game over / victory ----------
-  showGameOver(stats: RunStats, meta: MetaSave) {
+  showGameOver(stats: RunStats, meta: MetaSave, newBest = false) {
     this.show('gameover');
     this.overlay.innerHTML = '';
     const s = this.el(`
       <div class="screen dim">
         <h2 class="screen-title" style="color:#ff8d7a">The Flame Gutters…</h2>
         <div class="subtitle">…but a match is never truly out.</div>
+        ${newBest ? '<div class="subtitle" style="color:var(--amber);font-style:normal;letter-spacing:.2em">★ NEW BEST RUN ★</div>' : ''}
         <div class="panel">
           <div class="stats-grid">
             <span class="k">Reached</span><span class="v">${STAGES[stats.stageReached - 1]?.name ?? '—'}</span>
@@ -400,13 +401,14 @@ export class UI {
     s.querySelector('#g-menu')!.addEventListener('click', () => { this.sfxClick(); this.hooks.onQuitToMenu(); });
   }
 
-  showVictory(stats: RunStats, meta: MetaSave) {
+  showVictory(stats: RunStats, meta: MetaSave, newBest = false) {
     this.show('victory');
     this.overlay.innerHTML = '';
     const s = this.el(`
       <div class="screen dim">
         <div class="title-logo"><span class="small">THE GREAT HEARTH IS LIT</span><span class="big">VICTORY</span></div>
         <div class="subtitle">The house is warm again — all because of one last spark.</div>
+        ${newBest ? '<div class="subtitle" style="color:var(--amber);font-style:normal;letter-spacing:.2em">★ NEW BEST TIME ★</div>' : ''}
         <div class="panel">
           <div class="stats-grid">
             <span class="k">Run time</span><span class="v">${fmtTime(stats.time)}</span>

@@ -27,13 +27,14 @@ game.hooks = {
     ui.showLevelUp(offers, game.rerollsLeft);
   },
   onGameOver(stats) {
-    meta.runs += 0; // counted at start
+    const newBest = stats.stageReached > meta.bestStage;
     meta.bestStage = Math.max(meta.bestStage, stats.stageReached);
     saveMeta(meta);
     mode = 'over';
-    ui.showGameOver(stats, meta);
+    ui.showGameOver(stats, meta, newBest);
   },
   onVictory(stats) {
+    const newBest = meta.bestTime === 0 || stats.time < meta.bestTime;
     meta.wins += 1;
     meta.bestStage = 3;
     meta.bestTime = meta.bestTime === 0 ? stats.time : Math.min(meta.bestTime, stats.time);
@@ -107,7 +108,8 @@ ui.init({
       mode = 'run';
     } else if (mode === 'story-ending') {
       mode = 'over';
-      ui.showVictory({ ...game.stats, time: game.time, level: game.player.level }, meta);
+      const newBest = meta.bestTime === game.time;
+      ui.showVictory({ ...game.stats, time: game.time, level: game.player.level }, meta, newBest);
     }
   },
   getSettings: () => settings,
@@ -138,6 +140,9 @@ input.attachTouchUI(
 );
 
 window.addEventListener('resize', () => game.resize());
+window.addEventListener('contextmenu', (e) => {
+  if ((e.target as HTMLElement).tagName !== 'INPUT') e.preventDefault();
+});
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && ui.current === 'playing') ui.showPause();
 });
@@ -254,7 +259,9 @@ function frame(now: number) {
   const dash = input.consumeDash();
 
   if (ui.current === 'playing' || (ui.current === 'levelup' && false)) {
-    acc += rawDt;
+    let simDt = rawDt;
+    if (game.slowMoT > 0) { game.slowMoT -= rawDt; simDt *= 0.3; }
+    acc += simDt;
     let steps = 0;
     const u0 = performance.now();
     while (acc >= STEP && steps < 5) {
