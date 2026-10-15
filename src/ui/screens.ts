@@ -474,6 +474,8 @@ export class UI {
     } else {
       bw.classList.add('hidden');
     }
+    // low hp warning
+    $('#lowhp').classList.toggle('on', p.alive && p.hp / p.maxHp < 0.3);
   }
 }
 

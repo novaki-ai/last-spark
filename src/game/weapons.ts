@@ -228,8 +228,9 @@ export function updateWeapons(g: Game, dt: number) {
           const dmg = (w.evolved ? 90 : lv(DMG.sun_lens, w.level)) * p.stats.damageMul;
           if (w.evolved) {
             const hitIds = new Set<number>();
-            g.fx.beam(p.x, p.y, g.rng.angle(), len, wid, '#ffe9a0', 1.0, Math.PI * 2 / 1.0, hitIds);
-            g.pendingBeams.push({ x: 0, y: 0, followPlayer: true, dmg, len, wid, dur: 1.0, t: 0, angle: 0, sweep: Math.PI * 2, hitIds });
+            const startA = g.rng.angle();
+            g.fx.beam(p.x, p.y, startA, len, wid, '#ffe9a0', 1.0, Math.PI * 2 / 1.0, hitIds);
+            g.pendingBeams.push({ x: p.x, y: p.y, followPlayer: true, dmg, len, wid, dur: 1.0, t: 0, angle: startA, sweep: Math.PI * 2, hitIds });
             g.shake(4);
           } else {
             const t = g.nearestEnemy(p.x, p.y, 700, 0);

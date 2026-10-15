@@ -120,6 +120,7 @@ export class Game {
   invincible = false;
   gameOverT = -1;
   victoryT = -1;
+  freezeT = 0;
   levelupOpen = false;
   rerollsLeft = 0;
   private uidCounter = 1;
@@ -529,6 +530,7 @@ export class Game {
     const m = e.elite ? 1.6 : 1;
     this.fx.burst(e.x, e.y, e.isBoss ? 40 : e.elite ? 22 : 8, e.isBoss ? 320 : 160, e.isBoss ? '#ffde59' : '#ff9a4e', 4 * m, 4);
     if (!e.isBoss) this.audio.sfx('die', { pitch: e.elite ? 0.6 : 1 + this.rng.range(-0.15, 0.15) });
+    if (e.elite && !e.isBoss) this.freezeT = Math.max(this.freezeT, 0.09);
 
     if (e.isBoss) {
       this.onBossKilled(e);
@@ -924,6 +926,7 @@ export class Game {
   // ---------------- per-tick update ----------------
   update(dt: number, moveX: number, moveY: number, dashPressed: boolean) {
     if (!this.running) return;
+    if (this.freezeT > 0) { this.freezeT -= dt; return; }
     this.frame++;
 
     // delayed transitions run even while "paused" overlays show? No: only when not paused.
