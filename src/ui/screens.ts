@@ -435,6 +435,16 @@ export class UI {
     setTimeout(() => this.banner.classList.add('hidden'), duration);
   }
 
+  showTutorial(isTouch: boolean) {
+    const el = document.getElementById('tutorial-hint')!;
+    el.innerHTML = isTouch
+      ? 'Drag the <b>left side</b> of the screen to move — Novaki fights on his own.<br>Tap <b>DASH</b> to dodge through danger. Grab the blue sparks to level up!'
+      : 'Move with <b>WASD</b> or <b>arrow keys</b> — Novaki fights on his own.<br><b>Space</b> to dash through danger. Grab the blue sparks to level up!';
+    el.classList.remove('hidden');
+    el.style.opacity = '1';
+    setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.classList.add('hidden'), 1100); }, 9000);
+  }
+
   // ---------- HUD ----------
   updateHUD(g: Game) {
     this.hudTick++;

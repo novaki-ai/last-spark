@@ -46,6 +46,37 @@ export class Effects {
   telegraphs: Telegraph[] = [];
   flashT = 0; // full-screen white flash timer
   dmgNumbersEnabled = true;
+  private zoneTex = new Map<string, HTMLCanvasElement>();
+
+  private getZoneTex(kind: string): HTMLCanvasElement {
+    let c = this.zoneTex.get(kind);
+    if (c) return c;
+    c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const ctx = c.getContext('2d')!;
+    const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+    if (kind === 'fire') {
+      g.addColorStop(0, 'rgba(255,190,80,0.42)');
+      g.addColorStop(0.55, 'rgba(255,110,40,0.30)');
+      g.addColorStop(1, 'rgba(255,80,30,0)');
+    } else if (kind === 'tar') {
+      g.addColorStop(0, 'rgba(30,20,12,0.6)');
+      g.addColorStop(0.8, 'rgba(40,28,16,0.5)');
+      g.addColorStop(1, 'rgba(40,28,16,0)');
+    } else if (kind === 'pool') {
+      g.addColorStop(0, 'rgba(70,140,220,0.34)');
+      g.addColorStop(0.75, 'rgba(60,120,200,0.30)');
+      g.addColorStop(1, 'rgba(60,120,200,0)');
+    } else {
+      g.addColorStop(0, 'rgba(200,200,220,0.3)');
+      g.addColorStop(1, 'rgba(200,200,220,0)');
+    }
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+    this.zoneTex.set(kind, c);
+    return c;
+  }
+
 
   clear() {
     this.particles.length = 0;
@@ -157,7 +188,12 @@ export class Effects {
     for (let i = this.zones.length - 1; i >= 0; i--) {
       const z = this.zones[i];
       z.life -= dt;
-      if (z.life <= 0) { this.zones[i] = this.zones[this.zones.length - 1]; this.zones.pop(); }
+      if (z.life <= 0) { this.zones[i] = this.zones[this.zones.length - 1]; this.zones.pop(); continue; }
+      if (z.kind === 'fire' && this.particles.length < 500 && Math.random() < 0.25) {
+        const a = Math.random() * Math.PI * 2;
+        const d = Math.random() * z.r * 0.8;
+        this.spawn(z.x + Math.cos(a) * d, z.y + Math.sin(a) * d, 0, -34 - Math.random() * 30, 0.5, 2.5, Math.random() < 0.5 ? '#ffb14e' : '#ff7b2e', 4);
+      }
     }
     for (let i = this.telegraphs.length - 1; i >= 0; i--) {
       const t = this.telegraphs[i];
@@ -180,13 +216,8 @@ export class Effects {
       const a = fadeIn * fadeOut;
       if (a <= 0) continue;
       ctx.globalAlpha = a;
-      if (z.kind === 'fire') {
-        ctx.fillStyle = 'rgba(255,110,40,0.30)';
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,190,80,0.22)';
-        const wob = Math.sin(z.seed + z.life * 9) * z.r * 0.06;
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.r * 0.7 + wob, 0, Math.PI * 2); ctx.fill();
-      } else if (z.kind === 'vortex') {
+      if (z.kind === 'vortex') {
+        ctx.drawImage(this.getZoneTex('soft'), z.x - z.r, z.y - z.r, z.r * 2, z.r * 2);
         ctx.strokeStyle = 'rgba(190,190,210,0.5)';
         ctx.lineWidth = 3;
         const rot = z.life * 3;
@@ -195,18 +226,10 @@ export class Effects {
           ctx.arc(z.x, z.y, z.r * (0.4 + k * 0.3), rot + k, rot + k + Math.PI * 1.2);
           ctx.stroke();
         }
-      } else if (z.kind === 'tar') {
-        ctx.fillStyle = 'rgba(40,28,16,0.55)';
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill();
-      } else if (z.kind === 'pool') {
-        ctx.fillStyle = 'rgba(60,120,200,0.35)';
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(120,190,255,0.3)';
-        ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(z.x, z.y, z.r * 0.85, 0, Math.PI * 2); ctx.stroke();
-      } else if (z.kind === 'jet') {
-        ctx.fillStyle = 'rgba(140,200,255,0.4)';
-        ctx.fillRect(z.x - z.r, z.y - z.r, z.r * 2, z.r * 2);
+      } else {
+        const wob = z.kind === 'fire' ? 1 + Math.sin(z.seed + z.life * 9) * 0.05 : 1;
+        const rr = z.r * wob;
+        ctx.drawImage(this.getZoneTex(z.kind), z.x - rr, z.y - rr, rr * 2, rr * 2);
       }
       ctx.globalAlpha = 1;
     }

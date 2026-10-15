@@ -120,6 +120,7 @@ function beginRun(seed: number) {
   Audio.playMusic(game.stage.music);
   Audio.playVoice('novaki-start');
   ui.showBanner(game.stage.name.toUpperCase(), game.stage.sub, 3000);
+  ui.showTutorial(input.usingTouch);
 }
 
 // ---------------- input wiring ----------------
