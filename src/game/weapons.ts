@@ -26,7 +26,7 @@ const DMG: Record<string, number[]> = {
   ember_orbit: [10, 13, 16, 20, 24],
   matcharang: [16, 20, 25, 30, 36],
   flame_lash: [22, 28, 35, 43, 52],
-  smoke_ring: [9, 12, 15, 18, 22],
+  smoke_ring: [12, 15, 19, 23, 28],
   cinder_bolts: [8, 10, 12, 14, 16],
   firework_mortar: [26, 34, 42, 51, 60],
   sun_lens: [30, 38, 46, 55, 66],
@@ -40,7 +40,7 @@ const CD: Record<string, number[]> = {
   smoke_ring: [3.0, 2.8, 2.6, 2.4, 2.2],
   cinder_bolts: [0.55, 0.51, 0.47, 0.42, 0.38],
   firework_mortar: [2.8, 2.6, 2.4, 2.2, 2.0],
-  sun_lens: [3.2, 3.0, 2.8, 2.6, 2.4],
+  sun_lens: [2.9, 2.7, 2.5, 2.3, 2.1],
   kindling_swarm: [1.8, 1.65, 1.5, 1.4, 1.3],
 };
 

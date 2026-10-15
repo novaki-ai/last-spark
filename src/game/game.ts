@@ -725,6 +725,8 @@ export class Game {
     // don't interrupt transitions/game-over sequences; pending levels reopen later
     if (this.stageClearT > 0 || this.victoryT > 0 || this.gameOverT > 0 || !this.player.alive) return;
     this.levelupOpen = true;
+    this.fx.ring(this.player.x, this.player.y, '#ffde59', 16, 420, 0.55);
+    this.fx.embers(this.player.x, this.player.y - 20, 10);
     this.rerollsLeft = this.meta.items['m_reroll'] ? 1 : 0;
     this.audio.sfx('levelup');
     if (this.rng.chance(0.25)) this.audio.playVoice('novaki-levelup');
@@ -1494,6 +1496,35 @@ export class Game {
 
     // overlay damage numbers
     this.fx.renderOverlay(ctx);
+
+    // offscreen boss direction arrow (screen space)
+    if (this.boss && !this.boss.dead) {
+      const b = this.boss;
+      const sx = (b.x - camX) * zoom + this.w / 2;
+      const sy = (b.y - camY) * zoom + this.h / 2;
+      const margin = 46;
+      if (sx < -20 || sx > this.w + 20 || sy < -20 || sy > this.h + 20) {
+        const cx = this.w / 2, cy = this.h / 2;
+        const a = Math.atan2(sy - cy, sx - cx);
+        const t = Math.min(
+          Math.abs((cx - margin) / (Math.cos(a) || 1e-6)),
+          Math.abs((cy - margin) / (Math.sin(a) || 1e-6)),
+        );
+        const px = cx + Math.cos(a) * t;
+        const py = cy + Math.sin(a) * t;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(a);
+        ctx.globalAlpha = 0.75 + Math.sin(this.time * 6) * 0.25;
+        ctx.fillStyle = '#ff8d7a';
+        ctx.beginPath();
+        ctx.moveTo(14, 0); ctx.lineTo(-8, 9); ctx.lineTo(-3, 0); ctx.lineTo(-8, -9);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+    }
 
     // white flash
     if (this.fx.flashT > 0) {

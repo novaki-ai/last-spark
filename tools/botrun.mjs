@@ -23,7 +23,7 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message.slice(0, 300)))
 await page.goto(BASE, { waitUntil: 'networkidle' });
 await page.waitForFunction(() => window.NOVAKI_QA?.state().screen === 'menu', null, { timeout: 20000 });
 
-await page.evaluate(() => window.NOVAKI_QA.start({ seed: 1234 }));
+await page.evaluate((seed) => window.NOVAKI_QA.start({ seed }), Number(process.argv[2] ?? 1234));
 
 // Install bot inside the page
 await page.evaluate(() => {
