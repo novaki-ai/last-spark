@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Novaki: Last Spark</title>
+  <meta name="theme-color" content="#0c1016" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game"></canvas>
+    <div id="hud" class="hidden">
+      <div id="hud-top">
+        <div id="hp-wrap"><div id="hp-bar"><div id="hp-fill"></div></div><div id="hp-text"></div></div>
+        <div id="xp-wrap"><div id="xp-bar"><div id="xp-fill"></div></div><div id="level-badge">1</div></div>
+        <div id="hud-right">
+          <div id="stage-label"></div>
+          <div id="timer">0:00</div>
+          <div id="kill-count"></div>
+        </div>
+        <div id="weapon-slots"></div>
+      </div>
+      <div id="boss-bar-wrap" class="hidden"><div id="boss-name"></div><div id="boss-bar"><div id="boss-fill"></div></div></div>
+      <div id="dash-wrap"><div id="dash-fill"></div></div>
+      <button id="btn-pause" aria-label="Pause">II</button>
+    </div>
+    <div id="touch-ui" class="hidden">
+      <div id="joystick"><div id="joystick-knob"></div></div>
+      <div id="btn-dash">DASH</div>
+    </div>
+    <div id="overlay"></div>
+    <div id="banner" class="hidden"></div>
+  </div>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
