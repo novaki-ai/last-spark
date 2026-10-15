@@ -31,8 +31,9 @@ and kill the boss guarding each. Beating the third boss, the Soakfather, wins th
   spitters, zigzag dust bunnies, strafing moths, orbit-and-lunge scarabs, exploding bubble wisps,
   dashing eels, tar-trail tanks, teleporting rain wraiths, sniping storm kites, front-shielded
   hail husks, plus elite variants.
-- **3 bosses** with multiple telegraphed attack patterns, summons and voiced intro/defeat lines:
-  Mossmaw, Captain Clog, and the Soakfather (who has an enrage phase and a mid-fight taunt).
+- **3 bosses** with multiple telegraphed attack patterns, summons, voiced intro/defeat lines
+  and low-HP enrage phases: Mossmaw, Captain Clog, and the Soakfather (who also has a
+  voiced mid-fight taunt).
 - **9 weapons + 10 passives**, chosen 3-at-a-time on level-up. Weapons level to 5 and
   **evolve** when paired with their partner passive (e.g. Spark Toss + Dry Wick → Wildfire):
   9 evolutions in total. Meta unlocks add a reroll per level-up and alternative starting weapons.
