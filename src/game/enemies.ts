@@ -211,9 +211,12 @@ export function updateBoss(g: Game, e: Enemy, dt: number) {
   const hpP = e.hp / e.maxHp;
 
   if (e.def.id === 'boss_mossmaw') {
+    const enraged = hpP < 0.35;
+    if (enraged && !b.taunted) { b.taunted = true; g.audio.sfx('bossroar'); g.shake(6); g.hooks.onBanner('MOSSMAW RAGES', 'The thicket shakes'); }
+    const spdMul = enraged ? 1.4 : 1;
     // movement: slow stalk unless charging
     if (b.phase === 0) {
-      e.vx = nx * e.speed; e.vy = ny * e.speed;
+      e.vx = nx * e.speed * spdMul; e.vy = ny * e.speed * spdMul;
       if (b.attackT <= 0) {
         const roll = g.rng.next();
         if (roll < 0.34 && dist < 420) { b.phase = 1; b.t = 0; b.tx = nx; b.ty = ny; g.audio.sfx('telegraph'); }
@@ -235,7 +238,7 @@ export function updateBoss(g: Game, e: Enemy, dt: number) {
         const off = g.rng.angle();
         for (let i = 0; i < n; i++) {
           const a = off + (i * Math.PI * 2) / n;
-          g.fireEShot(e.x, e.y, Math.cos(a) * 170, Math.sin(a) * 170, 8, 10, 'spore');
+          g.fireEShot(e.x, e.y, Math.cos(a) * 170, Math.sin(a) * 170, 8, 9, 'spore');
         }
         g.audio.sfx('enemyshot');
         if (b.sub >= 3) { b.phase = 0; b.attackT = 3.2 - (1 - hpP) * 1.2; }
@@ -268,8 +271,11 @@ export function updateBoss(g: Game, e: Enemy, dt: number) {
       g.fx.burst(e.x, e.y, 14, 160, '#7fae4e', 4, 0);
     }
   } else if (e.def.id === 'boss_clog') {
+    const enraged = hpP < 0.35;
+    if (enraged && !b.taunted) { b.taunted = true; g.audio.sfx('bossroar'); g.shake(6); g.hooks.onBanner('CLOG OVERFLOWS', 'The pipes burst'); }
+    const spdMul = enraged ? 1.35 : 1;
     if (b.phase === 0) {
-      e.vx = nx * e.speed; e.vy = ny * e.speed;
+      e.vx = nx * e.speed * spdMul; e.vy = ny * e.speed * spdMul;
       if (b.attackT <= 0) {
         const roll = g.rng.next();
         if (roll < 0.3) { b.phase = 1; b.t = 0; b.sub = 0; }
@@ -342,7 +348,7 @@ export function updateBoss(g: Game, e: Enemy, dt: number) {
     }
   } else if (e.def.id === 'boss_soakfather') {
     const enrage = hpP < 0.3;
-    if (enrage && !b.taunted) { b.taunted = true; g.audio.playVoice('soak-taunt'); }
+    if (enrage && !b.taunted) { b.taunted = true; g.audio.playVoice('soak-taunt'); g.hooks.onBanner('THE STORM PEAKS', 'The Soakfather rages'); }
     const spdMul = enrage ? 1.5 : 1;
     if (b.phase === 0) {
       // drifts menacingly, keeps ~200 range
@@ -419,7 +425,7 @@ export const BOSS_DEFS = {
     base: ENEMIES.moss_beetle,
     def: {
       id: 'boss_mossmaw', name: 'Mossmaw', sprite: 'boss-mossmaw.png',
-      hp: 1750, speed: 52, dmg: 16, xp: 0, radius: 54, spriteH: 130,
+      hp: 1600, speed: 52, dmg: 14, xp: 0, radius: 54, spriteH: 130,
       behavior: 'chaser' as const, cost: 0, shardChance: 1,
     },
     voice: 'mossmaw-intro', deathVoice: 'mossmaw-death',

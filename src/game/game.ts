@@ -612,7 +612,7 @@ export class Game {
   }
 
   spawnEnemy(def: EnemyDef, x: number, y: number, elite: boolean): Enemy {
-    const timeMul = 1 + (this.stageTime / 300) * 0.8;
+    const timeMul = Math.min(1.65, 1 + (this.stageTime / 300) * 0.8);
     const hpMul = timeMul * (elite ? 9 : 1);
     const e: Enemy = {
       uid: this.uidCounter++,
@@ -866,6 +866,11 @@ export class Game {
       if (this.stageTime >= row[0]) { comp = row[1]; rate = row[2]; }
     }
     if (this.boss) rate *= 0.3;
+    // anti-spiral: bound accumulation so an under-leveled player can recover
+    const aliveNow = this.enemies.length;
+    if (aliveNow > 180) rate *= 0.22;
+    else if (aliveNow > 120) rate *= 0.5;
+    else if (aliveNow > 80) rate *= 0.75;
 
     this.spawnBudget += rate * dt;
     const alive = this.enemies.length;
@@ -1140,7 +1145,7 @@ export class Game {
     }
 
     // pickups
-    const magnetR = 110 * p.stats.pickupMul;
+    const magnetR = 130 * p.stats.pickupMul;
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const pk = this.pickups[i];
       pk.t += dt;

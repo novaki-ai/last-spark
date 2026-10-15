@@ -48,6 +48,11 @@ await page.evaluate(() => {
   window.__step = (gameSeconds) => {
     const dt = 1 / 60;
     for (let s = 0; s < gameSeconds; s++) {
+      // story screens pause the sim, like the real game loop
+      if (window.__ui.current === 'story') {
+        window.__ui.advanceStoryByKey();
+        continue;
+      }
       // decide input once per game-second
       const p = g.player;
       let tx = 0, ty = 0;
@@ -103,7 +108,7 @@ await page.evaluate(() => {
       window.__bot.log.push({
         t: Math.round(g.time), stage: g.stage.id, st: Math.round(g.stageTime),
         hp: Math.round(p.hp), lvl: p.level, enemies: g.enemies.length,
-        kills: g.stats.kills, boss: !!g.boss,
+        kills: g.stats.kills, boss: !!g.boss, bs: g.bossSpawned, clear: g.stageClearT,
       });
       if (!g.running) { window.__bot.done = true; break; }
     }
@@ -120,7 +125,7 @@ for (let chunk = 0; chunk < 400; chunk++) {
   if (s.time - lastPrint >= 60 || done) {
     lastPrint = s.time;
     const L = await page.evaluate(() => window.__bot.log[window.__bot.log.length - 1]);
-    console.log(`t=${L.t}s stage=${L.stage} st=${L.st} lvl=${L.lvl} hp=${L.hp} enemies=${L.enemies} kills=${L.kills} boss=${L.boss} screen=${ui}`);
+    console.log(`t=${L.t}s stage=${L.stage} st=${L.st} lvl=${L.lvl} hp=${L.hp} enemies=${L.enemies} kills=${L.kills} boss=${L.boss} bs=${L.bs} clear=${L.clear} screen=${ui}`);
   }
   if (done) break;
   // handle transitions: story screens block nothing in sim, but advance them
@@ -133,8 +138,23 @@ for (let chunk = 0; chunk < 400; chunk++) {
   }
 }
 
+// advance any lingering story slides (ending/transition) to reach the terminal screen
+for (let i = 0; i < 8; i++) {
+  const ui = await page.evaluate(() => window.__ui.current);
+  if (ui !== 'story') break;
+  await page.evaluate(() => window.__ui.advanceStoryByKey());
+  await new Promise((r) => setTimeout(r, 60));
+}
+const lastLogs = await page.evaluate(() => window.__bot.log.slice(-6));
+console.log('last logs:', JSON.stringify(lastLogs));
 const final = await page.evaluate(() => ({
   state: window.NOVAKI_QA.state(),
+  dbg: {
+    running: window.__game.running, bs: window.__game.bossSpawned, boss: !!window.__game.boss,
+    clear: window.__game.stageClearT, vic: window.__game.victoryT, go: window.__game.gameOverT,
+    stageIdx: window.__game.stageIdx, st: window.__game.stageTime.toFixed(1),
+    ui: window.__ui.current, mode: window.__ui.storyIdx,
+  },
   stats: window.__game.stats,
   build: {
     weapons: window.__game.player.weapons.map((w) => `${w.id}:${w.level}${w.evolved ? 'E' : ''}`),
@@ -143,6 +163,7 @@ const final = await page.evaluate(() => ({
   meta: JSON.parse(localStorage.getItem('novaki_last_spark_meta_v1') || '{}'),
 }));
 console.log('\n=== RESULT ===');
+console.log('dbg:', JSON.stringify(final.dbg));
 console.log('screen:', final.state.screen, '| time:', Math.round(final.stats.time) + 's', '| level:', final.state.player.level, '| kills:', final.stats.kills);
 console.log('build:', final.build.weapons.join(' '), '|', final.build.passives.join(' '));
 console.log('shards earned:', final.stats.shardsEarned, '| meta shards:', final.meta.shards);
