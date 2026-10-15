@@ -148,6 +148,8 @@ function frame(now: number) {
   const rawDt = Math.min(0.25, (now - last) / 1000);
   last = now;
   input.update();
+  const w = window as unknown as { __perf?: { update: number; render: number; frames: number } };
+  if (!w.__perf) w.__perf = { update: 0, render: 0, frames: 0 };
 
   // global keys
   if (input.consumePause()) {
@@ -164,17 +166,22 @@ function frame(now: number) {
   if (ui.current === 'playing' || (ui.current === 'levelup' && false)) {
     acc += rawDt;
     let steps = 0;
+    const u0 = performance.now();
     while (acc >= STEP && steps < 5) {
       game.update(STEP, input.moveX, input.moveY, dash && steps === 0);
       acc -= STEP;
       steps++;
     }
+    w.__perf.update += performance.now() - u0;
     if (steps === 5) acc = 0;
   } else {
     acc = 0;
   }
 
+  const r0 = performance.now();
   game.render();
+  w.__perf.render += performance.now() - r0;
+  w.__perf.frames++;
   if (ui.current === 'playing' || ui.current === 'paused' || ui.current === 'levelup') {
     ui.updateHUD(game);
   }
@@ -192,6 +199,8 @@ async function boot() {
 void boot();
 
 // ---------------- QA interface ----------------
+(window as unknown as { __game: Game }).__game = game;
+(window as unknown as { __ui: UI }).__ui = ui;
 interface QAState {
   screen: string;
   stage: number;

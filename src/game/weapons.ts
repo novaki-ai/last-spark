@@ -22,18 +22,18 @@ function lv(table: number[], level: number): number {
 }
 
 const DMG: Record<string, number[]> = {
-  spark_toss: [12, 16, 20, 25, 30],
+  spark_toss: [16, 20, 24, 28, 32],
   ember_orbit: [10, 13, 16, 20, 24],
   matcharang: [16, 20, 25, 30, 36],
   flame_lash: [22, 28, 35, 43, 52],
   smoke_ring: [9, 12, 15, 18, 22],
-  cinder_bolts: [7, 9, 11, 13, 15],
+  cinder_bolts: [8, 10, 12, 14, 16],
   firework_mortar: [26, 34, 42, 51, 60],
   sun_lens: [30, 38, 46, 55, 66],
   kindling_swarm: [9, 12, 14, 17, 20],
 };
 const CD: Record<string, number[]> = {
-  spark_toss: [0.9, 0.84, 0.78, 0.72, 0.66],
+  spark_toss: [0.8, 0.75, 0.7, 0.65, 0.6],
   ember_orbit: [0, 0, 0, 0, 0],
   matcharang: [2.2, 2.05, 1.9, 1.75, 1.6],
   flame_lash: [1.6, 1.48, 1.36, 1.24, 1.1],

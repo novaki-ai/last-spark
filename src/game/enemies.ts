@@ -419,7 +419,7 @@ export const BOSS_DEFS = {
     base: ENEMIES.moss_beetle,
     def: {
       id: 'boss_mossmaw', name: 'Mossmaw', sprite: 'boss-mossmaw.png',
-      hp: 1500, speed: 52, dmg: 18, xp: 0, radius: 54, spriteH: 130,
+      hp: 1750, speed: 52, dmg: 16, xp: 0, radius: 54, spriteH: 130,
       behavior: 'chaser' as const, cost: 0, shardChance: 1,
     },
     voice: 'mossmaw-intro', deathVoice: 'mossmaw-death',
@@ -428,7 +428,7 @@ export const BOSS_DEFS = {
     base: ENEMIES.clog_glob,
     def: {
       id: 'boss_clog', name: 'Captain Clog', sprite: 'boss-clog.png',
-      hp: 2400, speed: 40, dmg: 20, xp: 0, radius: 60, spriteH: 145,
+      hp: 2900, speed: 40, dmg: 18, xp: 0, radius: 60, spriteH: 145,
       behavior: 'chaser' as const, cost: 0, shardChance: 1,
     },
     voice: 'clog-intro', deathVoice: 'clog-death',
@@ -437,7 +437,7 @@ export const BOSS_DEFS = {
     base: ENEMIES.rain_wraith,
     def: {
       id: 'boss_soakfather', name: 'The Soakfather', sprite: 'boss-soakfather.png',
-      hp: 3600, speed: 58, dmg: 22, xp: 0, radius: 64, spriteH: 165,
+      hp: 5200, speed: 58, dmg: 22, xp: 0, radius: 64, spriteH: 165,
       behavior: 'chaser' as const, cost: 0, shardChance: 1,
     },
     voice: 'soak-intro', deathVoice: 'soak-death',

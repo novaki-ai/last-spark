@@ -281,6 +281,14 @@ export class Effects {
         ctx.strokeStyle = p.color;
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.stroke();
+      } else if (p.kind === 5) {
+        ctx.globalAlpha = lifeP;
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = p.size * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 0.035, p.y - p.vy * 0.035);
+        ctx.stroke();
       } else {
         ctx.globalAlpha = p.kind === 1 ? lifeP * 0.5 : lifeP;
         ctx.fillStyle = p.color;

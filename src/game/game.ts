@@ -82,7 +82,7 @@ export interface GameHooks {
 }
 
 const BASE_SPEED = 205;
-const ENEMY_CAP = 290;
+const ENEMY_CAP = 300;
 
 export class Game {
   canvas: HTMLCanvasElement;
@@ -132,6 +132,9 @@ export class Game {
   playerSpriteLit: SpriteSet | null = null;
   bgPatterns = new Map<string, CanvasPattern>();
   gemSprites: HTMLCanvasElement[] = [];
+  private vignetteCanvas: HTMLCanvasElement | null = null;
+  private vignetteStage = -1;
+  private glowCanvas: HTMLCanvasElement | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -152,9 +155,9 @@ export class Game {
       const clean = despill(img);
       // find world height
       let worldH = 40;
-      for (const d of Object.values(ENEMIES)) if (d.sprite === n) worldH = d.spriteH;
+      for (const d of Object.values(ENEMIES)) if (d.sprite === n) worldH = d.spriteH * 1.22;
       for (const b of Object.values(BOSS_DEFS)) if (b.def.sprite === n) worldH = b.def.spriteH;
-      if (n === 'novaki-idle.png' || n === 'novaki-lit.png') worldH = 66;
+      if (n === 'novaki-idle.png' || n === 'novaki-lit.png') worldH = 88;
       const set = makeSpriteSet(clean, worldH);
       this.sprites.set(n, set);
       // elite variant: bigger + purple tint
@@ -178,7 +181,10 @@ export class Game {
       const img = await loadImage(bg);
       if (img) {
         const pat = this.ctx.createPattern(img, 'repeat');
-        if (pat) this.bgPatterns.set(bg, pat);
+        if (pat) {
+          pat.setTransform(new DOMMatrix().scale(1.6));
+          this.bgPatterns.set(bg, pat);
+        }
       }
     }
 
@@ -261,6 +267,7 @@ export class Game {
     this.camX = 0; this.camY = 0;
     this.running = true;
     this.paused = false;
+    this.invincible = false;
     // starter pack of enemies nearby
     for (let i = 0; i < 5; i++) {
       const a = this.rng.angle();
@@ -308,7 +315,7 @@ export class Game {
   }
 
   xpNeed(level: number): number {
-    return Math.floor(10 + level * 7 + Math.pow(level, 1.75) * 1.4);
+    return Math.floor(6 + level * 5 + Math.pow(level, 1.65));
   }
 
   // ---------------- helpers used by weapon/enemy systems ----------------
@@ -442,7 +449,7 @@ export class Game {
     if (!p.alive || p.invulnT > 0 || p.dashT > 0 || this.invincible) return;
     const reduced = Math.max(1, dmg - p.stats.armor);
     p.hp -= reduced;
-    p.invulnT = 0.5;
+    p.invulnT = 0.65;
     this.stats.dmgTaken += reduced;
     this.audio.sfx('hurt');
     this.shake(7);
@@ -493,7 +500,7 @@ export class Game {
     if (crit) dmg *= 2;
     e.hp -= dmg;
     e.hitFlash = 1;
-    this.stats.dmgDealt += dmg;
+    this.stats.dmgDealt += Math.max(0, Math.min(dmg, e.hp + dmg)); // count actual hp removed
     if (!opts.silent) {
       this.fx.dmg(e.x, e.y - e.r, dmg, crit);
       if (e.isBoss) this.audio.sfx('bosshit'); else this.audio.sfx('hit', { pitch: 0.8 + Math.min(0.6, 30 / (dmg + 10)) });
@@ -549,7 +556,7 @@ export class Game {
     const xpVal = Math.round(e.xpValue * (e.elite ? 1 : 1));
     this.dropPickup('xp', e.x, e.y, xpVal);
     if (this.rng.chance(e.def.shardChance)) this.dropPickup('shard', e.x + this.rng.range(-14, 14), e.y + this.rng.range(-14, 14), e.elite ? 5 : 1);
-    if (this.rng.chance(0.022)) this.dropPickup('hp', e.x, e.y, 0);
+    if (this.rng.chance(0.032)) this.dropPickup('hp', e.x, e.y, 0);
     if (this.rng.chance(0.005)) this.dropPickup('magnet', e.x, e.y, 0);
     if (this.rng.chance(0.004)) this.dropPickup('bomb', e.x, e.y, 0);
     if (e.elite) {
@@ -584,14 +591,14 @@ export class Game {
   }
 
   spawnEnemy(def: EnemyDef, x: number, y: number, elite: boolean): Enemy {
-    const timeMul = 1 + (this.stageTime / 240) * 0.9;
+    const timeMul = 1 + (this.stageTime / 300) * 0.8;
     const hpMul = timeMul * (elite ? 9 : 1);
     const e: Enemy = {
       uid: this.uidCounter++,
       def, x, y, vx: 0, vy: 0,
       hp: def.hp * hpMul, maxHp: def.hp * hpMul, r: def.radius * (elite ? 1.35 : 1),
       speed: def.speed * (elite ? 0.92 : 1) * this.rng.range(0.9, 1.1),
-      dmg: def.dmg * (1 + this.stageTime / 500) * (elite ? 1.5 : 1),
+      dmg: def.dmg * (1 + this.stageTime / 600) * (elite ? 1.5 : 1),
       xpValue: def.xp * (elite ? 12 : 1),
       elite,
       t: 0, state: 0, state2: this.rng.range(0.5, 2), tx: 0, ty: 0,
@@ -691,9 +698,8 @@ export class Game {
     this.eshots.length = 0;
     this.pendingBeams.length = 0;
     this.fx.clear();
+    if (this.pendingLevels > 0 && !this.levelupOpen) this.openLevelUp();
   }
-
-  // ---------------- level ups ----------------
   grantXp(amount: number) {
     const p = this.player;
     p.xp += amount * p.stats.xpMul;
@@ -709,6 +715,8 @@ export class Game {
   }
 
   openLevelUp() {
+    // don't interrupt transitions/game-over sequences; pending levels reopen later
+    if (this.stageClearT > 0 || this.victoryT > 0 || this.gameOverT > 0 || !this.player.alive) return;
     this.levelupOpen = true;
     this.rerollsLeft = this.meta.items['m_reroll'] ? 1 : 0;
     this.audio.sfx('levelup');
@@ -988,7 +996,7 @@ export class Game {
       if (p.invulnT > 0) p.invulnT -= dt;
       if (p.stats.regen > 0) p.hp = Math.min(p.maxHp, p.hp + p.stats.regen * dt);
       // head smoke
-      if (this.frame % 14 === 0) this.fx.smoke(p.x + p.facing * 3, p.y - 44, 3.5);
+      if (this.frame % 26 === 0) this.fx.smoke(p.x + p.facing * 3, p.y - 58, 3);
     }
 
     this.updateWorldLite(dt);
@@ -1016,8 +1024,10 @@ export class Game {
         this.enemies.pop();
         continue;
       }
-      if (e.isBoss) updateBoss(this, e, dt);
-      else updateEnemy(this, e, dt);
+      if (e.isBoss) {
+        if (e.spawnT > 0) e.spawnT -= dt;
+        updateBoss(this, e, dt);
+      } else updateEnemy(this, e, dt);
     }
 
     // separation (normal enemies only, sampled)
@@ -1103,7 +1113,7 @@ export class Game {
     }
 
     // pickups
-    const magnetR = 70 * p.stats.pickupMul;
+    const magnetR = 110 * p.stats.pickupMul;
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const pk = this.pickups[i];
       pk.t += dt;
@@ -1112,7 +1122,7 @@ export class Game {
       if (pk.kind === 'xp' && (pk.magnet || d2 < magnetR * magnetR)) {
         pk.magnet = true;
         const d = Math.sqrt(d2) || 1;
-        const pull = 520 + Math.max(0, 200 - d) * 4;
+        const pull = 560 + Math.max(0, 260 - d) * 5;
         pk.vx = (dx / d) * pull;
         pk.vy = (dy / d) * pull;
       } else if (pk.kind !== 'xp' && d2 < (magnetR * 1.2) * (magnetR * 1.2)) {
@@ -1134,6 +1144,7 @@ export class Game {
 
     // fx
     this.fx.update(dt);
+    this.updateWeather(dt);
 
     // spawner + boss
     if (this.stageClearT <= 0 && p.alive) this.updateSpawner(dt);
@@ -1374,6 +1385,35 @@ export class Game {
     }
   }
 
+  // ambient stage weather (visual only)
+  updateWeather(dt: number) {
+    const vr = this.viewRadius();
+    if (this.stage.id === 1) {
+      // drifting spores
+      if (this.frame % 5 === 0) {
+        const x = this.camX + (Math.random() - 0.5) * vr * 1.6;
+        const y = this.camY + (Math.random() - 0.5) * vr * 1.6;
+        this.fx.spawn(x, y, 6 + Math.random() * 8, -4 - Math.random() * 8, 3.5, 1.6, 'rgba(180,230,150,0.30)', 0);
+      }
+    } else if (this.stage.id === 2) {
+      // ceiling drips
+      if (this.frame % 8 === 0) {
+        const x = this.camX + (Math.random() - 0.5) * vr * 1.6;
+        const y = this.camY + (Math.random() - 0.5) * vr * 1.6;
+        this.fx.spawn(x, y, 0, 480, 0.9, 2, 'rgba(140,190,255,0.4)', 5);
+      }
+    } else {
+      // driving rain
+      for (let i = 0; i < 2; i++) {
+        const x = this.camX + (Math.random() - 0.5) * vr * 1.8;
+        const y = this.camY - vr * 0.6 + (Math.random() - 0.5) * vr;
+        this.fx.spawn(x, y, -60, 640, 0.75, 2.2, 'rgba(150,190,255,0.32)', 5);
+      }
+      // occasional far lightning flash
+      if (this.frame % 900 === 0 && Math.random() < 0.5) this.fx.flashT = Math.max(this.fx.flashT, 0.12);
+    }
+  }
+
   // ---------------- render ----------------
   render() {
     const ctx = this.ctx;
@@ -1410,7 +1450,16 @@ export class Game {
     // pickups
     this.renderPickups(ctx);
 
-    // enemies
+    // enemies (shadows batched into one path first)
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      if (e.x < vx0 - 80 || e.x > vx1 + 80 || e.y < vy0 - 80 || e.y > vy1 + 80) continue;
+      ctx.moveTo(e.x + e.r * 0.9, e.y + e.r * 0.75);
+      ctx.ellipse(e.x, e.y + e.r * 0.75, e.r * 0.9, e.r * 0.35, 0, 0, Math.PI * 2);
+    }
+    ctx.fill();
     for (const e of this.enemies) {
       if (e.dead) continue;
       if (e.x < vx0 - 80 || e.x > vx1 + 80 || e.y < vy0 - 80 || e.y > vy1 + 80) continue;
@@ -1447,16 +1496,25 @@ export class Game {
       ctx.globalAlpha = 1;
     }
 
-    // fog vignette in screen space
+    // fog vignette in screen space (pre-rendered once per stage/resize)
+    if (!this.vignetteCanvas || this.vignetteStage !== this.stage.id || this.vignetteCanvas.width !== this.canvas.width || this.vignetteCanvas.height !== this.canvas.height) {
+      const c = document.createElement('canvas');
+      c.width = this.canvas.width;
+      c.height = this.canvas.height;
+      const vctx = c.getContext('2d')!;
+      const g = vctx.createRadialGradient(
+        c.width / 2, c.height / 2, Math.min(c.width, c.height) * 0.32,
+        c.width / 2, c.height / 2, Math.max(c.width, c.height) * 0.62,
+      );
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, this.stage.fog);
+      vctx.fillStyle = g;
+      vctx.fillRect(0, 0, c.width, c.height);
+      this.vignetteCanvas = c;
+      this.vignetteStage = this.stage.id;
+    }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const g = ctx.createRadialGradient(
-      this.canvas.width / 2, this.canvas.height / 2, Math.min(this.canvas.width, this.canvas.height) * 0.32,
-      this.canvas.width / 2, this.canvas.height / 2, Math.max(this.canvas.width, this.canvas.height) * 0.62,
-    );
-    g.addColorStop(0, 'rgba(0,0,0,0)');
-    g.addColorStop(1, this.stage.fog);
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.drawImage(this.vignetteCanvas, 0, 0);
   }
 
   private renderDecor(ctx: CanvasRenderingContext2D, vx0: number, vy0: number, vx1: number, vy1: number) {
@@ -1550,11 +1608,6 @@ export class Game {
     const w = set.w * scaleIn, h = set.h * scaleIn;
     const padX = (img.width - set.w) / 2 * scaleIn;
     const padY = (img.height - set.h) / 2 * scaleIn;
-    // shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(e.x, e.y + e.r * 0.75, e.r * 0.9, e.r * 0.35, 0, 0, Math.PI * 2);
-    ctx.fill();
     const bob = Math.sin(e.t * 6 + e.seedV * 10) * 1.5;
     ctx.drawImage(img, e.x - w / 2 - padX, e.y - h * set.anchorY - padY + bob, img.width * scaleIn, img.height * scaleIn);
     if (e.hitFlash > 0) {
@@ -1582,6 +1635,19 @@ export class Game {
     const dashing = p.dashT > 0;
     const set = dashing && this.playerSpriteLit ? this.playerSpriteLit : this.playerSprite;
     if (!set) return;
+    // warm hero glow — keeps the eye on Novaki (pre-rendered stamp)
+    if (!this.glowCanvas) {
+      const c = document.createElement('canvas');
+      c.width = 340; c.height = 340;
+      const gctx = c.getContext('2d')!;
+      const g = gctx.createRadialGradient(170, 170, 10, 170, 170, 170);
+      g.addColorStop(0, 'rgba(255,170,80,0.14)');
+      g.addColorStop(1, 'rgba(255,170,80,0)');
+      gctx.fillStyle = g;
+      gctx.fillRect(0, 0, 340, 340);
+      this.glowCanvas = c;
+    }
+    ctx.drawImage(this.glowCanvas, p.x - 170, p.y - 190);
     const img = p.facing >= 0 ? set.normal : set.flipped;
     // walk bob + lean
     const moving = Math.abs(p.vx) + Math.abs(p.vy) > 20;
