@@ -543,6 +543,13 @@ export class Game {
     this.fx.burst(e.x, e.y, e.isBoss ? 40 : e.elite ? 22 : 8, e.isBoss ? 320 : 160, e.isBoss ? '#ffde59' : '#ff9a4e', 4 * m, 4);
     if (!e.isBoss) this.audio.sfx('die', { pitch: e.elite ? 0.6 : 1 + this.rng.range(-0.15, 0.15) });
     if (e.elite && !e.isBoss) this.freezeT = Math.max(this.freezeT, 0.09);
+    // kill milestones
+    const k = this.stats.kills;
+    const milestone = k === 100 ? 'WARMING UP!' : k === 300 ? 'ON FIRE!' : k === 600 ? 'BLAZING!' : k === 1000 ? 'INFERNO!' : k === 1500 ? 'THE DAMP REMEMBERS FEAR' : null;
+    if (milestone) {
+      this.fx.text(this.player.x, this.player.y - 46, milestone, '#ffde59');
+      this.audio.sfx('chest');
+    }
 
     if (e.isBoss) {
       this.onBossKilled(e);

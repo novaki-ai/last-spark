@@ -46,6 +46,7 @@ export class Effects {
   telegraphs: Telegraph[] = [];
   flashT = 0; // full-screen white flash timer
   dmgNumbersEnabled = true;
+  qualityScale = 1; // FPS safety net: dampens particle spawns on weak machines
   private zoneTex = new Map<string, HTMLCanvasElement>();
 
   private getZoneTex(kind: string): HTMLCanvasElement {
@@ -89,7 +90,8 @@ export class Effects {
   }
 
   spawn(x: number, y: number, vx: number, vy: number, life: number, size: number, color: string, kind = 0, grow = 0, drag = 0) {
-    if (this.particles.length >= PMAX) return;
+    if (this.particles.length >= PMAX * this.qualityScale) return;
+    if (this.qualityScale < 1 && Math.random() > this.qualityScale + 0.25) return;
     this.particles.push({ x, y, vx, vy, life, maxLife: life, size, color, kind, grow, drag });
   }
 

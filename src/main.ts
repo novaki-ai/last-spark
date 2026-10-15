@@ -237,6 +237,7 @@ window.addEventListener('keydown', (e) => {
 const STEP = 1 / 60;
 let acc = 0;
 let last = performance.now();
+const fpsWindow: number[] = [];
 
 function frame(now: number) {
   requestAnimationFrame(frame);
@@ -280,6 +281,17 @@ function frame(now: number) {
   w.__perf.render += performance.now() - r0;
   w.__perf.frames++;
   menuNav.update(rawDt);
+
+  // FPS safety net: if sustained fps drops, dampen particle spawning
+  fpsWindow.push(rawDt);
+  if (fpsWindow.length > 240) fpsWindow.shift();
+  if (fpsWindow.length === 240) {
+    const avg = fpsWindow.reduce((a, b) => a + b, 0) / 240;
+    const fps = 1 / avg;
+    if (fps < 45 && game.fx.qualityScale > 0.5) game.fx.qualityScale = 0.5;
+    else if (fps > 55 && game.fx.qualityScale < 1) game.fx.qualityScale = 1;
+    fpsWindow.length = 0;
+  }
   if (ui.current === 'playing' || ui.current === 'paused' || ui.current === 'levelup') {
     ui.updateHUD(game);
   }

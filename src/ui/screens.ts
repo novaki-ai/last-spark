@@ -93,9 +93,12 @@ export class UI {
     this.overlay.innerHTML = '';
     const meta = this.hooks.getMeta();
     const art = imageUrl('keyart-menu.png');
+    const embers = Array.from({ length: 18 }, (_, i) =>
+      `<i class="menu-ember" style="left:${(i * 53 + 7) % 97}%; animation-delay:${(i * 0.83) % 6}s; animation-duration:${5 + (i % 5)}s"></i>`).join('');
     const s = this.el(`
       <div class="screen">
         <div class="menu-art" style="${art ? `background-image:url('${art}')` : ''}"></div>
+        <div class="menu-embers">${embers}</div>
         <div class="title-logo"><span class="small">NOVAKI</span><span class="big">LAST SPARK</span></div>
         <div class="subtitle">The Damp is rising. One match remains.</div>
         <div class="menu-col">
