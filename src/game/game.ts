@@ -282,9 +282,9 @@ export class Game {
       this.spawnEnemyAt('soot_imp', Math.cos(a) * 320, Math.sin(a) * 320, false);
     }
     // teaching drops: a few sparks + a cocoa near spawn
-    this.dropPickup('xp', 90, -40, 5);
-    this.dropPickup('xp', -110, 30, 5);
-    this.dropPickup('xp', 40, 110, 5);
+    this.dropPickup('xp', 90, -40, 3);
+    this.dropPickup('xp', -110, 30, 3);
+    this.dropPickup('xp', 40, 110, 3);
     this.dropPickup('hp', -60, -120, 0);
   }
 

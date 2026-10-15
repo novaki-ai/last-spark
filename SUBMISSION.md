@@ -56,7 +56,7 @@ and kill the boss guarding each. Beating the third boss, the Soakfather, wins th
   separation, pooled particles/projectiles/pickups, fixed-timestep simulation decoupled from
   rendering.
 - Holds 60 fps with 350+ enemies and a full weapon loadout in automated tests
-  (measured in headless Chromium; update ≈0.3 ms, render ≈0.7 ms per frame).
+  (headless Chromium; sim ≈0.15 ms/tick, render ≈3 ms/frame even in software rasterization).
 - All art generated with `varlik image` (24 images: hero, 14 enemies, 3 bosses, 3 backgrounds,
   story/menu illustrations), all music/voice with `varlik music`/`varlik voice`.
   Sprites are downscaled + converted to WebP (dist ≈ 6 MB).

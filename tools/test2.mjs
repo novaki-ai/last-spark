@@ -39,6 +39,10 @@ const errors = [];
   await page.mouse.click(640, 400); await sleep(400);
   await page.screenshot({ path: 'shots/22-intro3.png' });
   await page.mouse.click(640, 400); await sleep(600);
+  for (let i = 0; i < 10; i++) {
+    s = await page.evaluate(() => window.NOVAKI_QA.state());
+    if (s.screen === 'levelup') { await page.evaluate(() => window.NOVAKI_QA.chooseUpgrade(0)); await sleep(120); } else break;
+  }
   s = await page.evaluate(() => window.NOVAKI_QA.state());
   console.log('after intro:', s.screen === 'playing' ? 'ok playing' : 'FAIL ' + s.screen);
 
@@ -61,7 +65,12 @@ const errors = [];
     g.player.hp = 5;
     window.NOVAKI_QA.spawnEnemies(80);
   });
-  await page.waitForFunction(() => ['gameover'].includes(window.NOVAKI_QA.state().screen), null, { timeout: 30000 }).catch(() => {});
+  for (let i = 0; i < 40; i++) {
+    const st = await page.evaluate(() => window.NOVAKI_QA.state());
+    if (st.screen === 'gameover') break;
+    if (st.screen === 'levelup') await page.evaluate(() => window.NOVAKI_QA.chooseUpgrade(0));
+    await sleep(500);
+  }
   s = await page.evaluate(() => window.NOVAKI_QA.state());
   console.log('gameover screen:', s.screen === 'gameover' ? 'ok' : 'FAIL ' + s.screen);
   await sleep(400);
@@ -85,6 +94,10 @@ const errors = [];
   await page.screenshot({ path: 'shots/30-mobile-menu.png' });
   await page.evaluate(() => window.NOVAKI_QA.start({ seed: 3 }));
   await sleep(500);
+  for (let i = 0; i < 6; i++) {
+    const st = await page.evaluate(() => window.NOVAKI_QA.state());
+    if (st.screen === 'levelup') { await page.evaluate(() => window.NOVAKI_QA.chooseUpgrade(0)); await sleep(120); } else break;
+  }
   // drag on left half = joystick
   const before = await page.evaluate(() => window.NOVAKI_QA.state().player.x);
   await page.touchscreen.tap(100, 500); // gesture
@@ -105,15 +118,20 @@ const errors = [];
       window.dispatchEvent(ev);
     };
     mk('touchstart', 90, 480);
-    let i = 0;
-    const iv = setInterval(() => {
-      i += 8;
-      mk('touchmove', 90 + i, 480);
-      if (i > 60) clearInterval(iv);
-    }, 60);
+    for (let i = 8; i <= 70; i += 8) mk('touchmove', 90 + i, 480);
     window.__tend = () => mk('touchend', 160, 480);
   });
-  await sleep(1400);
+  await sleep(1600);
+  // keep joystick held with periodic moves (input is polled per frame)
+  await page.evaluate(() => {
+    const mk = (type, x, y) => {
+      const touch = new Touch({ identifier: 7, target: document.body, clientX: x, clientY: y });
+      const ev = new TouchEvent(type, { bubbles: true, cancelable: true, changedTouches: [touch], touches: [touch] });
+      window.dispatchEvent(ev);
+    };
+    mk('touchmove', 160, 480);
+  });
+  await sleep(800);
   const during = await page.evaluate(() => window.NOVAKI_QA.state().player.x);
   await page.evaluate(() => window.__tend());
   console.log('touch move:', during > before + 20 ? `ok moved ${before} -> ${during}` : `FAIL ${before} -> ${during}`);
