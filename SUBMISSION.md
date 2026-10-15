@@ -74,12 +74,12 @@ Automated Playwright suites live in `tools/` (not part of the build): full QA-in
 - Weapon-specific sound design (currently shared synth banks) and music that intensifies with
   horde size.
 - More enemy death/attack animations (sprites are static, animated procedurally).
-- Gamepad menu navigation (gameplay is fully gamepad-ready; menus are pointer/keyboard-first).
 - Localization.
 
 ## Known bugs / limitations
 
-- Damage numbers are skipped when disabled in settings *and* under extreme load (cap 120).
-- On very old iOS Safari versions, audio starts only after the first touch (by design, Web Audio policy).
+- Damage numbers are capped (120 on screen) and skipped beyond that under extreme load.
+- On iOS Safari, audio starts only after the first touch (by design, Web Audio policy).
 - Enemy sprites face right only; left movement flips the sprite (a stylistic choice).
-- The pause button and boss bar can overlap on very narrow landscape phones (portrait is fine).
+- The pause button and boss bar can sit close together on very narrow landscape phones
+  (portrait is fine).
