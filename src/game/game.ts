@@ -119,6 +119,8 @@ export class Game {
   stats: RunStats = { kills: 0, dmgDealt: 0, dmgTaken: 0, time: 0, level: 1, shardsEarned: 0, stageReached: 1 };
   spawnBudget = 0;
   surgeT = 62;
+  xpCombo = 0;
+  xpComboT = 0;
   eliteT = 85;
   pendingLevels = 0;
   invincible = false;
@@ -456,7 +458,7 @@ export class Game {
 
   hurtPlayer(dmg: number, srcX: number, srcY: number) {
     const p = this.player;
-    if (!p.alive || p.invulnT > 0 || p.dashT > 0 || this.invincible) return;
+    if (!p.alive || p.invulnT > 0 || p.dashT > 0 || this.invincible || this.stageClearT > 0 || this.victoryT > 0) return;
     const reduced = Math.max(1, dmg - p.stats.armor);
     p.hp -= reduced;
     p.invulnT = 0.65;
@@ -974,6 +976,7 @@ export class Game {
 
     this.time += dt;
     this.stageTime += dt;
+    if (this.xpComboT > 0) { this.xpComboT -= dt; if (this.xpComboT <= 0) this.xpCombo = 0; }
     const p = this.player;
 
     // --- player movement ---
@@ -1184,7 +1187,9 @@ export class Game {
     switch (pk.kind) {
       case 'xp':
         this.grantXp(pk.value);
-        this.audio.sfx('xp', { pitch: 1 + Math.min(0.5, pk.value / 60) });
+        this.xpCombo = Math.min(16, this.xpCombo + 1);
+        this.xpComboT = 0.9;
+        this.audio.sfx('xp', { pitch: 0.9 + this.xpCombo * 0.06 + Math.min(0.4, pk.value / 60) });
         break;
       case 'hp':
         p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.28);
