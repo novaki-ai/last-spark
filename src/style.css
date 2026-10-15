@@ -138,6 +138,15 @@ h2.screen-title { font-size: clamp(24px, 4.5vw, 40px); letter-spacing: .18em; te
 .story-hint { font-size: 12px; letter-spacing: .25em; text-transform: uppercase; opacity: .55; animation: pulse 1.6s infinite; }
 @keyframes pulse { 0%,100% { opacity: .3; } 50% { opacity: .75; } }
 
+/* cinematic boss bars */
+#cinema-top, #cinema-bottom { position: absolute; left: 0; right: 0; height: 0; background: #000; z-index: 7; transition: height .5s ease; pointer-events: none; }
+#cinema-top { top: 0; }
+#cinema-bottom { bottom: 0; }
+body.cinema #cinema-top, body.cinema #cinema-bottom { height: 7vh; }
+
+/* gamepad / keyboard focus highlight for menu buttons and cards */
+.gp-focus { outline: 2px solid var(--amber) !important; outline-offset: 2px; box-shadow: 0 0 16px rgba(255,177,78,.5) !important; }
+
 /* banner (boss intro, stage titles) */
 #banner { position: absolute; left: 0; right: 0; top: 26%; z-index: 8; text-align: center; pointer-events: none; }
 #banner .b-kicker { font-size: clamp(12px, 2vw, 16px); letter-spacing: .5em; text-transform: uppercase; color: var(--amber); text-shadow: 0 2px 6px #000; }

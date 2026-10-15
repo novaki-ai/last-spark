@@ -5,9 +5,13 @@ import { Effects } from './effects';
 import { Audio } from '../core/audio';
 import { loadImage, despill, makeSpriteSet, type SpriteSet } from '../core/assets';
 import {
-  ENEMIES, STAGES, WEAPONS, PASSIVES, WEAPON_MAP, PASSIVE_MAP,
+  ENEMIES, STAGES, WEAPONS, PASSIVES, WEAPON_MAP, PASSIVE_MAP, saveMeta,
   type EnemyDef, type StageDef, type StatBlock, type MetaSave,
 } from './data';
+
+function saveMetaSafe(m: MetaSave) {
+  saveMeta(m);
+}
 import { updateWeapons, makeWeapon, type WeaponState } from './weapons';
 import { updateEnemy, updateBoss, BOSS_DEFS, type BossId } from './enemies';
 
@@ -706,6 +710,7 @@ export class Game {
     this.pendingBeams.length = 0;
     this.fx.clear();
     if (this.pendingLevels > 0 && !this.levelupOpen) this.openLevelUp();
+    saveMetaSafe(this.meta);
   }
   grantXp(amount: number) {
     const p = this.player;

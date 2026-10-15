@@ -59,6 +59,8 @@ game.hooks = {
   },
   onBossStart(name, title) {
     ui.showBanner(name, title, 3200);
+    document.body.classList.add('cinema');
+    setTimeout(() => document.body.classList.remove('cinema'), 3300);
   },
   onBanner(text, sub) {
     ui.showBanner(text, sub);
@@ -85,6 +87,7 @@ ui.init({
   onQuitToMenu() {
     game.running = false;
     mode = 'menu';
+    saveMeta(meta); // bank any shards picked up mid-run
     Audio.stopVoice();
     Audio.playMusic('menu');
     ui.show('menu');
@@ -139,6 +142,92 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden && ui.current === 'playing') ui.showPause();
 });
 
+// ---------------- menu navigation (gamepad + arrow keys) ----------------
+class MenuNav {
+  idx = -1;
+  private stickHeld = 0;
+  private lastScreen = '';
+  navScreens = new Set(['menu', 'paused', 'settings', 'howto', 'forge', 'gameover', 'victory', 'levelup']);
+
+  candidates(): HTMLElement[] {
+    const overlay = document.getElementById('overlay')!;
+    const els = overlay.querySelectorAll<HTMLElement>('button:not(:disabled), .card, select, .toggle, input[type=range]');
+    return Array.from(els).filter((e) => e.offsetParent !== null);
+  }
+
+  reset(screen: string) {
+    if (screen !== this.lastScreen) {
+      this.lastScreen = screen;
+      this.idx = -1;
+      this.clearFocus();
+    }
+  }
+
+  clearFocus() {
+    document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
+  }
+
+  move(dir: number) {
+    const c = this.candidates();
+    if (c.length === 0) return;
+    this.idx = (this.idx + dir + c.length) % c.length;
+    this.clearFocus();
+    c[this.idx].classList.add('gp-focus');
+    c[this.idx].scrollIntoView({ block: 'nearest' });
+  }
+
+  click() {
+    const c = this.candidates();
+    if (this.idx >= 0 && this.idx < c.length) {
+      (c[this.idx] as HTMLButtonElement).click();
+    }
+  }
+
+  update(dt: number) {
+    if (!this.navScreens.has(ui.current)) {
+      this.reset(ui.current);
+      return;
+    }
+    this.reset(ui.current);
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    let dir = 0;
+    for (const p of pads) {
+      if (!p || !p.connected) continue;
+      const y = p.axes[1] ?? 0;
+      const up = p.buttons[12]?.pressed || y < -0.55;
+      const down = p.buttons[13]?.pressed || y > 0.55;
+      if (up) dir = -1;
+      else if (down) dir = 1;
+      if (p.buttons[0]?.pressed && !this.aHeld) {
+        this.aHeld = true;
+        this.click();
+      }
+      if (!p.buttons[0]?.pressed) this.aHeld = false;
+      break;
+    }
+    if (dir !== 0) {
+      this.stickHeld += dt;
+      if (this.stickHeld === dt || this.stickHeld > 0.32) {
+        this.move(dir);
+        if (this.stickHeld > 0.32) this.stickHeld = 0.22;
+      }
+    } else {
+      this.stickHeld = 0;
+    }
+  }
+
+  private aHeld = false;
+}
+
+const menuNav = new MenuNav();
+
+window.addEventListener('keydown', (e) => {
+  if (!menuNav.navScreens.has(ui.current)) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { menuNav.move(1); e.preventDefault(); }
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { menuNav.move(-1); e.preventDefault(); }
+  else if (e.key === 'Enter' && ui.current !== 'story') { menuNav.click(); }
+});
+
 // ---------------- main loop ----------------
 const STEP = 1 / 60;
 let acc = 0;
@@ -183,6 +272,7 @@ function frame(now: number) {
   game.render();
   w.__perf.render += performance.now() - r0;
   w.__perf.frames++;
+  menuNav.update(rawDt);
   if (ui.current === 'playing' || ui.current === 'paused' || ui.current === 'levelup') {
     ui.updateHUD(game);
   }
